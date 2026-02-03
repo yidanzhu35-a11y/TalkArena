@@ -158,7 +158,8 @@ def process_voice_input(session_id: str, audio_file, chat_history: List) -> Gene
         yield chat_history, "", 50, 50, None, False
         return
     
-    yield from send_message(session_id, user_text, chat_history)
+    for update in send_message(session_id, user_text, chat_history):
+        yield update
 
 def send_message(session_id: str, user_input: str, chat_history: List) -> Generator:
     if not session_id or not user_input.strip():
@@ -288,14 +289,12 @@ def send_message(session_id: str, user_input: str, chat_history: List) -> Genera
             if len(responses) > 1:
                 # 多个角色：合并为一条消息
                 combined_content = "\n\n---\n\n".join([r["content"] for r in responses])
-                combined_content += f"\n\n---\n_📊 {judgment} (气场{shift_str}) | ⚙️ {model_name} {think_time}_"
                 chat_history.append({"role": "assistant", "content": combined_content})
             elif len(responses) == 1:
                 # 单个角色：直接添加
-                responses[0]["content"] += f"\n\n---\n_📊 {judgment} (气场{shift_str}) | ⚙️ {model_name} {think_time}_"
                 chat_history.append(responses[0])
 
-            yield chat_history, "", ai_dom, user_dom, audio_path, game_over
+            yield chat_history, judgment, ai_dom, user_dom, audio_path, game_over
 
 def handle_rescue(session_id: str, chat_history: List, txt_input: str) -> Tuple:
     """处理救场请求 - 生成高情商回复供用户参考"""

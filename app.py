@@ -60,6 +60,14 @@ def create_ui():
 
             scenario_buttons = []
             
+            # 场景对应的emoji
+            scenario_emojis = {
+                "shandong_dinner": "🍺",
+                "negotiation": "💼",
+                "debate": "🗣️",
+                "interview": "🎯"
+            }
+            
             # 创建两列布局
             with gr.Row(elem_classes="scenario-grid"):
                 with gr.Column(scale=1):
@@ -67,7 +75,8 @@ def create_ui():
                         if i % 2 == 0:  # 左列
                             is_active = (sid == "shandong_dinner")
                             cfg = SCENARIOS.get(sid, {"name": display_name, "desc": "开始挑战！"})
-                            btn_label = f"📋 {cfg['name']}" + ("" if is_active else " (建设中)")
+                            emoji = scenario_emojis.get(sid, "📋")
+                            btn_label = f"{emoji} {cfg['name']}" + ("" if is_active else " (建设中)")
                             btn = gr.Button(
                                 value=f"{btn_label}\n{cfg['desc']}",
                                 elem_classes="scenario-card",
@@ -80,7 +89,8 @@ def create_ui():
                         if i % 2 == 1:  # 右列
                             is_active = (sid == "shandong_dinner")
                             cfg = SCENARIOS.get(sid, {"name": display_name, "desc": "开始挑战！"})
-                            btn_label = f"📋 {cfg['name']}" + ("" if is_active else " (建设中)")
+                            emoji = scenario_emojis.get(sid, "📋")
+                            btn_label = f"{emoji} {cfg['name']}" + ("" if is_active else " (建设中)")
                             btn = gr.Button(
                                 value=f"{btn_label}\n{cfg['desc']}",
                                 elem_classes="scenario-card",
@@ -88,7 +98,7 @@ def create_ui():
                             )
                             scenario_buttons.append((btn, sid, cfg["name"], cfg["desc"]))
 
-            gr.HTML('<div class="footer-action">自定义场景 ?</div>')
+
 
        # ========== Page 2: 角色配置页 (仅山东饭局) ==========
         with gr.Column(visible=False, elem_classes="config-page") as page_config:
@@ -371,14 +381,73 @@ def create_ui():
             outputs=member_selected + [current_members] + member_buttons
         )
 
-        # 手动编辑按钮（占位功能）
+        # 编辑模态框
+        with gr.Column(visible=False, elem_id="edit-modal") as edit_modal:
+            with gr.Column(elem_classes="modal-content"):
+                gr.HTML('<div class="modal-header">手动编辑饭局成员</div>')
+                
+                # 成员编辑表单
+                member_editors = []
+                for i in range(3):
+                    with gr.Row(elem_classes="member-editor-row"):
+                        name_input = gr.Textbox(label=f"成员{i+1}姓名", elem_classes="member-name-input")
+                        role_input = gr.Textbox(label="角色", elem_classes="member-role-input")
+                        desc_input = gr.Textbox(label="描述", lines=3, elem_classes="member-desc-input")
+                        avatar_input = gr.Textbox(label="头像", placeholder="输入emoji", elem_classes="member-avatar-input")
+                        member_editors.append((name_input, role_input, desc_input, avatar_input))
+                
+                # 操作按钮
+                with gr.Row(elem_classes="modal-buttons"):
+                    save_btn = gr.Button("保存", variant="primary", elem_classes="save-btn")
+                    cancel_btn = gr.Button("取消", elem_classes="cancel-btn")
+
+        # 手动编辑按钮功能
         def edit_roster():
             import logging
             logging.info("[DEBUG] 点击了手动编辑按钮")
-            # TODO: 实现手动编辑饭局成员的功能
-            return None
+            # 显示编辑模态框
+            return gr.update(visible=True)
 
-        edit_btn.click(fn=edit_roster)
+        # 取消编辑
+        def cancel_edit():
+            return gr.update(visible=False)
+
+        # 保存编辑
+        def save_edit(name1, role1, desc1, avatar1, name2, role2, desc2, avatar2, name3, role3, desc3, avatar3):
+            import logging
+            logging.info("[DEBUG] 保存编辑")
+            
+            # 构建新的成员列表，确保名字不为空并去除空格
+            new_members = [
+                (avatar1 or "👤", (name1 or "").strip() or f"成员1", (role1 or "").strip() or "角色", (desc1 or "").strip() or "描述"),
+                (avatar2 or "👤", (name2 or "").strip() or f"成员2", (role2 or "").strip() or "角色", (desc2 or "").strip() or "描述"),
+                (avatar3 or "👤", (name3 or "").strip() or f"成员3", (role3 or "").strip() or "角色", (desc3 or "").strip() or "描述")
+            ]
+            
+            logging.info(f"[DEBUG] 保存成员: {[m[1] for m in new_members]}")
+            
+            # 准备按钮更新
+            button_updates = []
+            for member in new_members:
+                avatar, name, role, desc = member
+                button_updates.append(
+                    gr.update(
+                        value=f"{avatar}\n{name}\n{role}\n{desc}",
+                        elem_classes="roster-card roster-card-selected"
+                    )
+                )
+            
+            # 隐藏模态框并更新成员状态和按钮
+            return [gr.update(visible=False), new_members] + button_updates
+
+        # 绑定事件
+        edit_btn.click(fn=edit_roster, outputs=[edit_modal])
+        cancel_btn.click(fn=cancel_edit, outputs=[edit_modal])
+        save_btn.click(
+            fn=save_edit, 
+            inputs=[inp for editor in member_editors for inp in editor], 
+            outputs=[edit_modal, current_members] + member_buttons
+        )
 
         # 配置页返回场景选择
         def back_from_config():
@@ -690,7 +759,7 @@ def create_ui():
             theme_color = scene.get("theme_color", "#4A90E2")
             characters = scene.get("characters")
             game_over_detected = False
-            for chat, _, ai_dom, user_dom, audio, game_over in send_message(sess, text, history):
+            for chat, judgment, ai_dom, user_dom, audio, game_over in send_message(sess, text, history):
                 game_over_detected = game_over
                 # 尝试解析当前讲话者
                 last_msg = chat[-1]["content"] if chat and len(chat) > 0 else ""
@@ -699,12 +768,9 @@ def create_ui():
                 # 去除头像前缀
                 speaker = last_title.split(' ')[-1] if ' ' in last_title else last_title
 
-                # 获取最后一次判定的点评内容（如果有）
-                judgment = "对局中"
-                if "📊" in last_msg:
-                    parts = last_msg.split("📊")
-                    if len(parts) > 1:
-                        judgment = parts[1].split("(")[0].strip()
+                # 使用send_message返回的judgment信息
+                if not judgment:
+                    judgment = "对局中"
 
                 yield (
                     chat, "",
@@ -807,17 +873,14 @@ def create_ui():
             theme_color = scene.get("theme_color", "#4A90E2")
             characters = scene.get("characters")
             game_over_detected = False
-            for chat, _, ai_dom, user_dom, audio, game_over in process_voice_input(sess, audio_path, history):
+            for chat, judgment, ai_dom, user_dom, audio, game_over in process_voice_input(sess, audio_path, history):
                 game_over_detected = game_over
                 last_title = chat[-1].get("metadata", {}).get("title", "") if chat and len(chat) > 0 and chat[-1] else ""
                 speaker = last_title.split(' ')[-1] if ' ' in last_title else last_title
 
-                last_msg = chat[-1]["content"] if chat and len(chat) > 0 else ""
-                judgment = "对局中"
-                if "📊" in last_msg:
-                    parts = last_msg.split("📊")
-                    if len(parts) > 1:
-                        judgment = parts[1].split("(")[0].strip()
+                # 使用process_voice_input返回的judgment信息
+                if not judgment:
+                    judgment = "对局中"
 
                 yield (
                     chat, "",

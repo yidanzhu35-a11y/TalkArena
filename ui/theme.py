@@ -63,7 +63,8 @@ body, html {
 .scene-select-page[hidden],
 .config-page[hidden],
 .chat-page[hidden],
-.report-page[hidden] {
+.report-page[hidden],
+.edit-modal[hidden] {
     display: none !important;
 }
 
@@ -808,19 +809,51 @@ body, html {
 
 /* 场景卡片（选择页）*/
 .scenario-card {
-    background: white;
-    border: 2px solid #E5E7EB;
-    border-radius: 16px;
-    padding: 30px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-height: 180px;
+    background: white !important;
+    border: 2px solid #E5E7EB !important;
+    border-radius: 16px !important;
+    padding: 30px !important;
+    min-height: 180px !important;
+    text-align: center !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    white-space: pre-line !important;
+}
+
+.scenario-card::first-line {
+    font-size: 18px !important;
+    font-weight: bold !important;
+    color: #2C3E50 !important;
+    display: block !important;
+    margin-bottom: 12px !important;
+    line-height: 1.2 !important;
+}
+
+.scenario-card {
+    font-size: 14px !important;
+    color: #7F8C8D !important;
+    font-weight: normal !important;
+    line-height: 1.4 !important;
 }
 
 .scenario-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    border-color: #4A90E2;
+    transform: translateY(-5px) !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    border-color: #4A90E2 !important;
+}
+
+.scenario-card:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+}
+
+.scenario-card:disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: #E5E7EB !important;
 }
 
 /* 页脚 */
@@ -830,6 +863,92 @@ body, html {
     font-size: 14px;
     margin-top: 40px;
     cursor: pointer;
+}
+
+/* 编辑模态框 */
+#edit-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    pointer-events: auto !important;
+}
+
+#edit-modal[hidden],
+#edit-modal.hide {
+    display: none !important;
+    background: transparent !important;
+    z-index: -1 !important;
+    pointer-events: none !important;
+}
+
+.modal-content {
+    background: white !important;
+    border-radius: 16px !important;
+    padding: 30px !important;
+    width: 90% !important;
+    max-width: 800px !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+.modal-header {
+    font-size: 24px !important;
+    font-weight: bold !important;
+    color: #D48806 !important;
+    text-align: center !important;
+    margin-bottom: 30px !important;
+    padding-bottom: 15px !important;
+    border-bottom: 2px solid #E5E7EB !important;
+}
+
+.member-editor-row {
+    gap: 15px !important;
+    margin-bottom: 20px !important;
+    padding: 20px !important;
+    background: #FFF9F0 !important;
+    border-radius: 12px !important;
+    border: 1px solid #E5E7EB !important;
+}
+
+.member-name-input,
+.member-role-input,
+.member-desc-input,
+.member-avatar-input {
+    flex: 1 !important;
+    min-width: 120px !important;
+}
+
+.member-desc-input {
+    flex: 2 !important;
+    min-height: 100px !important;
+}
+
+.modal-buttons {
+    gap: 15px !important;
+    margin-top: 30px !important;
+    justify-content: center !important;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .member-editor-row {
+        flex-direction: column;
+    }
+    
+    .member-name-input,
+    .member-role-input,
+    .member-desc-input,
+    .member-avatar-input {
+        width: 100%;
+    }
 }
 
 /* 麦克风容器 */
